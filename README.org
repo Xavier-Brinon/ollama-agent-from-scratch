@@ -3,7 +3,7 @@
 #+startup: indent
 #+property: header-args :results output
 * 🧙 Ollama agent from scratch
-Like the Front End Masters Course, build an AI agent from scratch, but locally
+Like the Front End Masters Course, [[frontendmasters.com/courses/ai-agents/][build an AI agent from scratch]] [fn:1], but locally
 with Ollama.
 * 🏁 Start a node project with TS
 Since the last version of *Node*, as of today, support TS, I'll just let the IDE
@@ -78,3 +78,7 @@ For now I'll get the prompt via the ~readline~ interface.
 Axel wrote an [[https://2ality.com/2025/01/typescript-enum-patterns.html][article]] about the Typescript ~enum~ and its alternatives.
 Could be relevant when listing the Mistral models.
 * TODO Handle ~SIGTERM~
+
+* Footnotes
+
+[fn:1]By [[https://frontendmasters.com/teachers/scott-moss/][Scott Moss]]
