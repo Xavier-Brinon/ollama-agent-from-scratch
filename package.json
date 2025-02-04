@@ -1,0 +1,27 @@
+{
+  "name": "ollama-agent-from-scratch",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "node index.ts",
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com-personal:Xavier-Brinon/ollama-agent-from-scratch.git"
+  },
+  "type": "module",
+  "keywords": [
+    "ollama",
+    "agent"
+  ],
+  "author": "Xavier Brinon",
+  "license": "GPL-3.0-or-later",
+  "description": "Like the Front End Masters Course, build an AI agent from scratch, but with Ollama.",
+  "devDependencies": {
+    "@types/node": "^22.13.1"
+  },
+  "dependencies": {
+    "ollama": "^0.5.12"
+  }
+}
