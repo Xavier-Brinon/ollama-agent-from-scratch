@@ -1,0 +1,80 @@
+#+title: Build an AI Agent from Scratch with Ollama
+#+date: [2025-02-04 Tue]
+#+startup: indent
+#+property: header-args :results output
+* 🧙 Ollama agent from scratch
+Like the Front End Masters Course, build an AI agent from scratch, but locally
+with Ollama.
+* 🏁 Start a node project with TS
+Since the last version of *Node*, as of today, support TS, I'll just let the IDE
+handle the types and run without transpiling.
+In the root of the folder:
+#+begin_src bash
+  npm init -y
+#+end_src
+
+Some basic settings to begin with:
+- Main entry point is =index.ts=. I write directly in typescript and let *Node*
+  do the stripping. I will probably have to use only a subset of the TS features
+  available.
+- Tests will run with the built in test runner ~node --test~.
+  *Node* will run against any file that ends with =.test.ts=
+
+
+Because Typescript doesn't understand *Node* types, I need to also install them.
+#+name: install node types
+#+begin_src bash
+  npm i -D @types/node
+#+end_src
+* 🔑 Env
+It's all done locally, so no need of handling API Keys of any sort.
+
+* 📦 Ollama package
+Based on the [[https://github.com/ollama/ollama-js][github page]]
+And the [[https://ollama.com/][official site]]
+** Models
+The list in the [[https://ollama.com/search][search page]], download what your
+machine can handle.
+For me, I'll go with:
+- [[https://ollama.com/library/deepseek-r1][deepseek-r1]]
+- [[https://ollama.com/library/llama3.3][llama3.3]]
+- [[https://ollama.com/library/mistral-small][mistral-small]]
+
+** NPM package
+Install the *Ollama-js* npm package
+#+name: install mistral packagge
+#+begin_src bash
+  npm i ollama
+#+end_src
+
+* Reading inputs
+There is an [[https://nodejs.org/docs/latest/api/readline.html#readline][example]] on *Node* documentation.
+
+* TigerBeetle
+I'm trying to follow some common sense based on the TigerBeetle [[https://github.com/tigerbeetle/tigerbeetle/blob/main/docs/TIGER_STYLE.md][manifesto]].
+mainly the part on *Assertions*
+#+begin_quote
+Assert all function arguments and return values, pre/postconditions and
+invariants. A function must not operate blindly on data it has not checked.
+The purpose of a function is to increase the probability that a program is
+correct.
+Assertions within a function are part of how functions serve this purpose.
+The assertion density of the code must average a minimum of two assertions per
+function.
+#+end_quote
+* TODO Prompt can be passed via the cli                                 :CLI:
+Right now the command is ~npm run start~. It waits for the user input via
+~readline.createInterface~. Instead I want to be able to add the prompt
+when calling the LLM, something like ~npm run llm "this is the prompt"~
+Checked [[https://nodejs.org/docs/latest/api/process.html#processargv][manual]], and I don't see yet how this can work when the command
+triggers an npm command that calls the function:
+1. npm run start
+2. node index.ts
+
+
+The ~process.argv~ returns the argv of (1.)
+For now I'll get the prompt via the ~readline~ interface.
+* TODO Read the article about the alternatives to enum              :ARTICLE:
+Axel wrote an [[https://2ality.com/2025/01/typescript-enum-patterns.html][article]] about the Typescript ~enum~ and its alternatives.
+Could be relevant when listing the Mistral models.
+* TODO Handle ~SIGTERM~
