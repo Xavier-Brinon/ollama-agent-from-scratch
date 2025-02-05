@@ -22,5 +22,4 @@ export const runLLM = async (prompt: Message['content']) => {
     messages: [message],
     stream: true
   })
-
 }
