@@ -63,9 +63,10 @@ The assertion density of the code must average a minimum of two assertions per
 function.
 #+end_quote
 * TODO Prompt can be passed via the cli                                 :CLI:
-Right now the command is ~npm run start~. It waits for the user input via
-~readline.createInterface~. Instead I want to be able to add the prompt
-when calling the LLM, something like ~npm run llm "this is the prompt"~
+Right now the command is ~node --run start~. It waits for the user input via
+~readline.createInterface~.
+Instead I want to be able to add the prompt when calling the LLM, something like
+~node --run llm "this is the prompt"~
 Checked [[https://nodejs.org/docs/latest/api/process.html#processargv][manual]], and I don't see yet how this can work when the command
 triggers an npm command that calls the function:
 1. npm run start
@@ -76,7 +77,6 @@ The ~process.argv~ returns the argv of (1.)
 For now I'll get the prompt via the ~readline~ interface.
 * TODO Read the article about the alternatives to enum              :ARTICLE:
 Axel wrote an [[https://2ality.com/2025/01/typescript-enum-patterns.html][article]] about the Typescript ~enum~ and its alternatives.
-Could be relevant when listing the Mistral models.
 * TODO Handle ~SIGTERM~
 
 * Footnotes
