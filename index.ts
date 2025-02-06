@@ -17,17 +17,18 @@ assert.ok(cliResponse !== '', 'cliResponse: cli.question returned empty string.'
 cli.close()
 
 const response = await runLLM(cliResponse)
+if (response) {
+  const fullResponse: ChatResponse[] = []
+  let fullContent: Message['content'] = ''
 
-const fullResponse: ChatResponse[] = []
-let fullContent: Message['content'] = ''
-
-for await (const part of response) {
-  fullResponse.push(part)
-  if (part?.message?.content) {
-    fullContent += part.message.content
+  for await (const part of response) {
+    fullResponse.push(part)
+    if (part?.message?.content) {
+      fullContent += part.message.content
+    }
+    process.stdout.write(part.message.content)
   }
-  process.stdout.write(part.message.content)
-}
 
-indexLogger.debug({ fullContent })
-indexLogger.debug({ fullResponse: JSON.stringify(fullResponse, null, 2) })
+  indexLogger.debug({ fullContent })
+  indexLogger.debug({ fullResponse: JSON.stringify(fullResponse, null, 2) })
+}

@@ -1,0 +1,153 @@
+#+title: Ollama-js Contribution Guidelines
+#+date: [2025-02-06 Thu]
+#+startup: indent
+#+property: header-args :results output
+
+The contribution is a copy of the coding standards from *Ollama* team, with some
+modifications to match the current project.
+This document outlines the coding standards and best practices for contributing
+to Ollama-js. Following these guidelines helps maintain consistency and quality
+across the codebase.
+
+* TypeScript Usage
+Ollama-js is written in *TypeScript*. When contributing, please adhere to the
+following TypeScript best practices:
+** Prefer interfaces over types for object shapes
+#+begin_src javascript
+  // Good
+  interface Config {
+    host: string
+    fetch?: Fetch
+    proxy?: boolean
+    headers?: HeadersInit
+  }
+
+  // Avoid
+  type Config = {
+    host: string
+    fetch?: Fetch
+    proxy?: boolean
+    headers?: HeadersInit
+  }
+#+end_src
+
+** Use union types for variables that can be multiple types
+#+begin_src javascript
+  async encodeImage(image: Uint8Array | Buffer | string): Promise<string> {
+    // Implementation
+  }
+#+end_src
+
+** Utilize TypeScript's built-in utility types when appropriate
+e.g.:
+- ~Partial<T>~
+- ~Pick<T>~
+- ~Omit<T>~
+
+** Use type inference where possible
+But include explicit return types for functions.
+
+#+begin_src javascript
+.async function createBlob(path: string): Promise<string> {
+  // Implementation
+}
+#+end_src
+
+* Error Handling
+Proper error handling is crucial for maintaining a robust and user-friendly
+library.
+
+** Use custom error classes for specific error types
+#+begin_src javascript
+  class ResponseError extends Error {
+    constructor(
+      public error: string,
+      public status_code: number,
+    ) {
+      super(error);
+      this.name = 'ResponseError';
+
+      if (Error.captureStackTrace) {
+        Error.captureStackTrace(this, ResponseError);
+      }
+    }
+  }
+#+end_src
+
+** Catch and handle errors appropriately
+Avoid swallowing errors without logging or reporting.
+
+#+begin_src javascript
+  try {
+    // Attempt an operation
+  } catch (error) {
+    console.error('Operation failed:', error);
+    // Handle the error or rethrow if necessary
+  }
+#+end_src
+
+** Use async/await with try/catch for asynchronous error handling
+#+begin_src javascript
+  async function someAsyncFunction() {
+    try {
+      const result = await someAsyncOperation();
+      return result;
+    } catch (error) {
+      console.error('Async operation failed:', error);
+      throw error; // or handle it appropriately
+    }
+  }
+#+end_src
+
+* Documentation Practices
+Good documentation is essential for maintainability and usability.
+
+** Use JSDoc comments for classes, interfaces, and functions
+#+begin_src javascript
+  /**
+   ,* Generates a response from a text prompt.
+   ,* @param request {GenerateRequest} - The request object.
+   ,* @returns {Promise<GenerateResponse | AbortableAsyncIterator<GenerateResponse>>} - The response object or
+   ,* an AbortableAsyncIterator that yields response messages.
+   ,*/
+  async generate(
+    request: GenerateRequest,
+  ): Promise<GenerateResponse | AbortableAsyncIterator<GenerateResponse>> {
+    // Implementation
+  }
+#+end_src
+
+** Include inline comments for complex logic or non-obvious code
+#+begin_src javascript
+  // Filter out default headers from custom headers
+  const customHeaders = Object.fromEntries(
+      Object.entries(options.headers)
+          .filter(([key]) => !Object.keys(defaultHeaders)
+                  .some(defaultKey => defaultKey.toLowerCase() === key.toLowerCase()))
+  );
+#+end_src
+
+** Keep README.org and other documentation files up-to-date with changes to the API or functionality
+
+** Use org for documentation files to ensure readability both in text editors and when rendered
+
+* Code Style and Formatting
+** Use a consistent code style throughout the project
+Consider using tools like Prettier or ESLint to enforce style rules.
+
+** Use meaningful variable and function names that describe their purpose
+
+** Keep functions small and focused on a single task
+
+** Limit line length to improve readability
+Typically 80-120 characters.
+
+* Version Control Practices
+** Write clear, concise commit messages that describe the changes made
+
+** Keep pull requests focused on a single feature or fix
+
+** Ensure all tests pass before submitting a pull request
+
+By following these guidelines, we can maintain a high-quality, consistent, and
+well-documented codebase.
