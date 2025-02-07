@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import ollama from 'ollama'
 import type { ChatRequest, ChatResponse, Message } from 'ollama'
-import { A } from 'ollama/dist/shared/ollama.67ec3cf9.mjs'
+import { AbortableAsyncIterator } from 'ollama/src/utils.js'
 import { logger } from './logger.ts'
 
 const runLLMLogger = logger.child({
@@ -18,7 +18,7 @@ const models: Record<string, ChatRequest['model']> = {
  * Runs a LLM model chat stream.
  * @name runLLM
  * @param prompt {string} - The prompt to run
- * @returns {Promise<A<ChatResponse> | null>} The response from the LLM
+ * @returns {Promise<AbortableAsyncIterator<ChatResponse>>} The response from the LLM
  * @example
  * const response = await runLLM('Hello, how are you?')
  * if (response) {
@@ -27,7 +27,7 @@ const models: Record<string, ChatRequest['model']> = {
  *   }
  * }
  */
-export const runLLM = async (prompt: string): Promise<A<ChatResponse> | null> => {
+export const runLLM = async (prompt: string): Promise<AbortableAsyncIterator<ChatResponse>> => {
   assert.ok(typeof prompt === 'string', `runLLM: prompt should be a string. Received: ${typeof prompt}`)
   assert.ok(prompt !== '', 'runLLM: prompt should not be empty')
 
@@ -36,7 +36,7 @@ export const runLLM = async (prompt: string): Promise<A<ChatResponse> | null> =>
     content: prompt
   }
 
-  let response: A<ChatResponse> | null
+  let response: AbortableAsyncIterator<ChatResponse>
   try {
     response = await ollama.chat({
       model: models.mistral,
@@ -45,8 +45,7 @@ export const runLLM = async (prompt: string): Promise<A<ChatResponse> | null> =>
     })
   } catch (chatResponseError) {
     runLLMLogger.error({chatResponseError})
-    response = null
+    throw chatResponseError
   }
   return response
 }
-
