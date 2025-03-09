@@ -2,7 +2,7 @@ import * as readline from 'node:readline/promises'
 import { stdin as input, stdout as output } from 'node:process'
 import assert from 'node:assert/strict'
 import { signal } from './abortController.ts'
-import { runLLM } from './runLLM.ts'
+import { contextedChat as runLLM } from './runLLM.ts'
 import type { ChatResponse, Message } from 'ollama'
 import { logger } from './logger.ts'
 
@@ -27,8 +27,12 @@ if (response) {
       fullContent += part.message.content
     }
     process.stdout.write(part.message.content)
+    if (part.done === true) {
+      part.message.content = fullContent
+      indexLogger.debug({ done: part }) // Should put that part in SQLite db.
+    }
   }
 
-  indexLogger.debug({ fullContent })
-  indexLogger.debug({ fullResponse: JSON.stringify(fullResponse, null, 2) })
+  // indexlogger.debug({ fullContent })
+  // indexLogger.debug({ fullResponse: JSON.stringify(fullResponse, null, 2) })
 }

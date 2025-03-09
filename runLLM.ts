@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { DatabaseSync } from 'node:sqlite'
 import ollama from 'ollama'
 import type { ChatRequest, ChatResponse, Message } from 'ollama'
 import { logger } from './logger.ts'
@@ -38,6 +39,7 @@ export const runLLM = async ({ prompt }: { prompt: string }): Promise<AbortableA
 
   let response: AbortableAsyncIterator<ChatResponse>
   try {
+    // @ts-ignore
     response = await ollama.chat({
       model: models.mistral,
       messages: [message],
@@ -106,6 +108,7 @@ export const runLLMChat = async ({ messageContent, context }: { messageContent: 
 
   let response: AbortableAsyncIterator<ChatResponse>
   try {
+    // @ts-ignore
     response = await ollama.chat({
       model: models.mistral,
       messages: [...context, message],
@@ -116,4 +119,35 @@ export const runLLMChat = async ({ messageContent, context }: { messageContent: 
     throw chatResponseError
   }
   return response
+}
+
+export const contextedChat = ({ prompt }: { prompt: string }) => {
+  assert.ok(typeof prompt === 'string', `The prompt text should be a string, got ${typeof prompt}`)
+  assert.ok(prompt !== '', 'Prompt text is empty')
+
+  const contextDB = new DatabaseSync('./context.db', {
+    allowExtension: true
+  })
+  contextDB.loadExtension('./plugins/json1.dylib')
+
+  contextDB.prepare(`
+    create table if not exists context (
+      rowid integer primary key autoincrement,
+      response text
+    )
+  `).run()
+
+  /**
+   * This chat look for any saved context and add it to the prompt.
+   * It then inserts the answer in the table and returns that answer.
+   */
+  const prepHasContext = contextDB.prepare(`
+    select count(*) as count from context limit 1;
+  `)
+  const { count }  = prepHasContext.get() as { count : number }
+  let chatHistory = [] 
+  if (count !== 0) {
+    // Collect the previous answers.
+  }
+  runLLMChat({ messageContent: prompt, context: chatHistory })
 }
