@@ -1,0 +1,4 @@
+CREATE TABLE data(
+       key INTEGER PRIMARY KEY,
+       value TEXT,
+) STRICT

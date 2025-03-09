@@ -16,7 +16,7 @@ const cliResponse = await cli.question('What do you want to aks the agent? ', { 
 assert.ok(cliResponse !== '', 'cliResponse: cli.question returned empty string.')
 cli.close()
 
-const response = await runLLM(cliResponse)
+const response = await runLLM({ prompt: cliResponse })
 if (response) {
   const fullResponse: ChatResponse[] = []
   let fullContent: Message['content'] = ''

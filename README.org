@@ -6,10 +6,39 @@
 Like the Front End Masters Course, [[frontendmasters.com/courses/ai-agents/][build an AI agent from scratch]] [fn:1], but locally
 with Ollama.
 * 🏁 Start a node project with TS
+** Alias for the models
+I can't be bothered typing the name of the models as they're downloaded as they
+include versions and variations.
+#+name: list models
+#+begin_src bash
+  ollama list
+#+end_src
+
+#+RESULTS: list models
+: NAME                 ID              SIZE     MODIFIED
+: llama3.3:latest      a6eb4748fd29    42 GB    6 days ago
+: mistral-small:24b    573418a2cab9    14 GB    8 days ag
+: deepseek-r1:70b      0c1615a8ca32    42 GB    10 days ago
+
+Following [[https://github.com/ollama/ollama/blob/main/docs/modelfile.md][the modelfile]] doc,
+One way to create the *alias* is to create a model file.
+#+name: Modelfile
+#+begin_src txt
+FROM mistral-small:24b
+#+end_src
+
+Since I want to create the name *mistral* as the alias then type in the command:
+#+begin_src bash
+  ollama create mistral -f ~/Modelfile
+  ollama run mistral
+#+end_src
+
+** Node app
 Since the last version of *Node*, as of today, support TS, I'll just let the IDE
 handle the types and run without transpiling.
 In the root of the folder:
 #+begin_src bash
+  nvm install 23
   npm init -y
 #+end_src
 
@@ -47,10 +76,11 @@ Install the *Ollama-js* npm package
   npm i ollama
 #+end_src
 
-* Reading inputs
+** TODO Remove the package and work only with the fetch API.        :NoDeps:
+** Reading inputs
 There is an [[https://nodejs.org/docs/latest/api/readline.html#readline][example]] on *Node* documentation.
 
-* TigerBeetle
+** TigerBeetle
 I'm trying to follow some common sense based on the TigerBeetle [[https://github.com/tigerbeetle/tigerbeetle/blob/main/docs/TIGER_STYLE.md][manifesto]].
 mainly the part on *Assertions*
 #+begin_quote
@@ -62,7 +92,7 @@ Assertions within a function are part of how functions serve this purpose.
 The assertion density of the code must average a minimum of two assertions per
 function.
 #+end_quote
-* TODO Prompt can be passed via the cli                                 :CLI:
+** TODO Prompt can be passed via the cli                               :CLI:
 Right now the command is ~node --run start~. It waits for the user input via
 ~readline.createInterface~.
 Instead I want to be able to add the prompt when calling the LLM, something like
@@ -75,9 +105,14 @@ triggers an npm command that calls the function:
 
 The ~process.argv~ returns the argv of (1.)
 For now I'll get the prompt via the ~readline~ interface.
-* TODO Read the article about the alternatives to enum              :ARTICLE:
+** TODO Read the article about the alternatives to enum            :ARTICLE:
 Axel wrote an [[https://2ality.com/2025/01/typescript-enum-patterns.html][article]] about the Typescript ~enum~ and its alternatives.
-* TODO Handle ~SIGTERM~
+** TODO Handle ~SIGTERM~
+* Memory
+I want to resend all the previous exchanges for follow up questions.
+It will look like the LLM "remembers" what you just said.
+The ~chat()~ function need to include the previous messages as context
+for the current message.
 
 * Footnotes
 
