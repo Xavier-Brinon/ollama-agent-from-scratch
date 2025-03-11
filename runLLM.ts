@@ -9,6 +9,9 @@ const runLLMLogger = logger.child({
   module: 'runLLM'
 })
 
+const contextedChatLogger = logger.child({
+  module: 'contextedChat'
+})
 const models: Record<string, ChatRequest['model']> = {
   deepseek: 'deepseek',
   mistral: 'mistral',
@@ -121,7 +124,24 @@ export const runLLMChat = async ({ messageContent, context }: { messageContent: 
   return response
 }
 
-export const contextedChat = ({ prompt }: { prompt: string }) => {
+/**
+ * if (response) {
+  const fullResponse: ChatResponse[] = []
+  let fullContent: Message['content'] = ''
+
+  for await (const part of response) {
+    fullResponse.push(part)
+    if (part?.message?.content) {
+      fullContent += part.message.content
+    }
+    process.stdout.write(part.message.content)
+    if (part.done === true) {
+      part.message.content = fullContent
+      indexLogger.debug({ done: part }) // Should put that part in SQLite db.
+    }
+  }
+ */
+export const contextedChat = async ({ prompt }: { prompt: string }) => {
   assert.ok(typeof prompt === 'string', `The prompt text should be a string, got ${typeof prompt}`)
   assert.ok(prompt !== '', 'Prompt text is empty')
 
@@ -144,10 +164,36 @@ export const contextedChat = ({ prompt }: { prompt: string }) => {
   const prepHasContext = contextDB.prepare(`
     select count(*) as count from context limit 1;
   `)
-  const { count }  = prepHasContext.get() as { count : number }
-  let chatHistory = [] 
+  const { count } = prepHasContext.get() as { count: number }
+  let chatHistory = []
   if (count !== 0) {
     // Collect the previous answers.
   }
-  runLLMChat({ messageContent: prompt, context: chatHistory })
+  const response = await runLLMChat({ messageContent: prompt, context: chatHistory })
+  if (response) {
+    const fullResponse: ChatResponse[] = []
+    let fullContent: Message['content'] = ''
+
+    for await (const part of response) {
+      fullResponse.push(part)
+      if (part?.message?.content) {
+        fullContent += part.message.content
+      }
+      process.stdout.write(part.message.content)
+      if (part.done === true) {
+        part.message.content = fullContent
+        contextedChatLogger.debug({ done: part }) // Should put that part in SQLite db.
+        const prepInsertChat = contextDB.prepare(`
+          insert into context (response)
+          values jsonb(?)
+          returning *;
+        `)
+        const runInsertChat = prepInsertChat.all(JSON.stringify(part))
+        console.log(part)
+        console.log(runInsertChat)
+      }
+    }
+  }
+  // add the response to the db
+  return response
 }
