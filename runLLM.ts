@@ -165,11 +165,23 @@ export const contextedChat = async ({ prompt }: { prompt: string }) => {
     select count(*) as count from context limit 1;
   `)
   const { count } = prepHasContext.get() as { count: number }
-  let chatHistory = []
+  let chatHistory = [] as { message: Message }[]
   if (count !== 0) {
     // Collect the previous answers.
+    // e.g. select response -> 'message' ->> 'content' from context;
+    const prepGetContext = contextDB.prepare(`
+      select
+        response -> 'message' ->> 'role' as role,
+        response -> 'message' ->> 'content' as content
+      from context;
+    `)
+    const runGetContext = prepGetContext.all() as { message: Message }[]
+    chatHistory = runGetContext
   }
-  const response = await runLLMChat({ messageContent: prompt, context: chatHistory })
+  const messagePrompt = { message: { role: 'user', content: prompt} }
+  chatHistory = [...chatHistory, messagePrompt]
+
+  const response = await runLLMChat({ messageContent: prompt, context: chatHistory.map(({ message }) => message) })
   if (response) {
     const fullResponse: ChatResponse[] = []
     let fullContent: Message['content'] = ''
@@ -182,18 +194,17 @@ export const contextedChat = async ({ prompt }: { prompt: string }) => {
       process.stdout.write(part.message.content)
       if (part.done === true) {
         part.message.content = fullContent
-        contextedChatLogger.debug({ done: part }) // Should put that part in SQLite db.
         const prepInsertChat = contextDB.prepare(`
           insert into context (response)
-          values jsonb(?)
+          values (jsonb(?))
           returning *;
         `)
+        const runInsertPrompt = prepInsertChat.run(JSON.stringify(messagePrompt))
         const runInsertChat = prepInsertChat.all(JSON.stringify(part))
-        console.log(part)
-        console.log(runInsertChat)
+        contextedChatLogger.debug({ runInsertPrompt, runInsertChat })
       }
     }
   }
-  // add the response to the db
+
   return response
 }
