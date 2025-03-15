@@ -124,24 +124,60 @@ export const runLLMChat = async ({ messageContent, context }: { messageContent: 
   return response
 }
 
-/**
- * if (response) {
-  const fullResponse: ChatResponse[] = []
-  let fullContent: Message['content'] = ''
+export const contextedChat = async ({ prompt }: { prompt: string }): Promise<AbortableAsyncIterator<ChatResponse>> => {
+  assert.ok(typeof prompt === 'string', `runLLM: prompt should be a string. Received: ${typeof prompt}`)
+  assert.ok(prompt !== '', 'runLLM: prompt should not be empty')
 
-  for await (const part of response) {
-    fullResponse.push(part)
-    if (part?.message?.content) {
-      fullContent += part.message.content
-    }
-    process.stdout.write(part.message.content)
-    if (part.done === true) {
-      part.message.content = fullContent
-      indexLogger.debug({ done: part }) // Should put that part in SQLite db.
+  const historyDB = new DatabaseSync('./history.db', {
+    allowExtension: true
+  })
+  historyDB.loadExtension('./plugins/json1.dylib')
+  historyDB.prepare('create table if not exists history (prompt text)').run()
+  const oldPromptsPrep = historyDB.prepare(`
+    select
+      prompt -> 'message' ->> 'role' as role,
+      prompt -> 'message' ->> 'content' as content
+    from history;
+  `)
+  const oldPrompts = oldPromptsPrep.all() as { message: Message }[]
+  contextedChatLogger.debug({ oldPrompts })
+
+  const newMessage = {
+    message: {
+      role: 'user',
+      content: prompt
     }
   }
- */
-export const contextedChat = async ({ prompt }: { prompt: string }) => {
+  const addPromptPrep = historyDB.prepare(`
+    insert into history (prompt)
+      values (jsonb(?))
+    returning *;
+  `)
+  const addPromptRun = addPromptPrep.run(JSON.stringify(newMessage))
+  contextedChatLogger.debug({ addPromptRun })
+
+  const response = await runLLMChat({ messageContent: prompt, context: [] })
+  if (response) {
+    const fullResponse: ChatResponse[] = []
+    let fullContent: Message['content'] = ''
+
+    for await (const part of response) {
+      fullResponse.push(part)
+      if (part?.message?.content) {
+        fullContent += part.message.content
+      }
+      process.stdout.write(part.message.content)
+      if (part.done === true) {
+        part.message.content = fullContent
+        contextedChatLogger.debug({ part })
+      }
+    }
+  }
+
+  return response
+}
+
+export const contextedChat_ = async ({ prompt }: { prompt: string }) => {
   assert.ok(typeof prompt === 'string', `The prompt text should be a string, got ${typeof prompt}`)
   assert.ok(prompt !== '', 'Prompt text is empty')
 
@@ -180,7 +216,7 @@ export const contextedChat = async ({ prompt }: { prompt: string }) => {
   }
   const messagePrompt = { message: { role: 'user', content: prompt} }
   chatHistory = [...chatHistory, messagePrompt]
-
+  contextedChatLogger.debug({ chatHistory, context: chatHistory.map(({ message }) => message) })
   const response = await runLLMChat({ messageContent: prompt, context: chatHistory.map(({ message }) => message) })
   if (response) {
     const fullResponse: ChatResponse[] = []

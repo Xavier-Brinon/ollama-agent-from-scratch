@@ -2,8 +2,7 @@ import * as readline from 'node:readline/promises'
 import { stdin as input, stdout as output } from 'node:process'
 import assert from 'node:assert/strict'
 import { signal } from './abortController.ts'
-import { contextedChat as runLLM } from './runLLM.ts'
-import type { ChatResponse, Message } from 'ollama'
+import { contextedChat } from './runLLM.ts'
 import { logger } from './logger.ts'
 
 const indexLogger = logger.child({
@@ -16,23 +15,5 @@ const cliResponse = await cli.question('What do you want to aks the agent? ', { 
 assert.ok(cliResponse !== '', 'cliResponse: cli.question returned empty string.')
 cli.close()
 
-const response = await runLLM({ prompt: cliResponse })
-if (response) {
-  const fullResponse: ChatResponse[] = []
-  let fullContent: Message['content'] = ''
-
-  for await (const part of response) {
-    fullResponse.push(part)
-    if (part?.message?.content) {
-      fullContent += part.message.content
-    }
-    process.stdout.write(part.message.content)
-    if (part.done === true) {
-      part.message.content = fullContent
-      indexLogger.debug({ done: part }) // Should put that part in SQLite db.
-    }
-  }
-
-  // indexlogger.debug({ fullContent })
-  // indexLogger.debug({ fullResponse: JSON.stringify(fullResponse, null, 2) })
-}
+const response = contextedChat({ prompt: cliResponse })
+indexLogger.debug(response)
