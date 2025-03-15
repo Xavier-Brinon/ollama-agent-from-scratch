@@ -2,8 +2,7 @@
 #+date: [2025-02-04 Tue]
 #+startup: indent
 #+property: header-args :results output
-![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/Xavier-Brinon/ollama-agent-from-scratch?utm_source=oss&utm_medium=github&utm_campaign=Xavier-Brinon%2Follama-agent-from-scratch&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
-
+[[https://img.shields.io/coderabbit/prs/github/Xavier-Brinon/ollama-agent-from-scratch?utm_source=oss&utm_medium=github&utm_campaign=Xavier-Brinon%2Follama-agent-from-scratch&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews][CodeRabbit Pull Request Review]]
 * 🧙 Ollama agent from scratch
 Like the Front End Masters Course, [[frontendmasters.com/courses/ai-agents/][build an AI agent from scratch]] [fn:1], but locally
 with Ollama.
@@ -115,6 +114,8 @@ I want to resend all the previous exchanges for follow up questions.
 It will look like the LLM "remembers" what you just said.
 The ~chat()~ function need to include the previous messages as context
 for the current message.
+** SQLite3
+I want to use the build in *sqlite3* feature in node.
 
 * Footnotes
 
