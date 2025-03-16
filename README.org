@@ -116,6 +116,12 @@ The ~chat()~ function need to include the previous messages as context
 for the current message.
 ** SQLite3
 I want to use the build in *sqlite3* feature in node.
+Nothing too complex, just storing the history of prompts and responses
+in order and appending them all in each new prompt.
+The course is using JSONDB, I guess that will be reflected in what schema
+to use for the table.
+The idea is to get the opportunity to do something with Node, to not use
+a third party library and explore a new tool.
 
 * Footnotes
 
