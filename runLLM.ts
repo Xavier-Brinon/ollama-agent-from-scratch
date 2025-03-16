@@ -139,8 +139,17 @@ export const contextedChat = async ({ prompt }: { prompt: string }): Promise<Abo
       prompt -> 'message' ->> 'content' as content
     from history;
   `)
-  const oldPrompts = oldPromptsPrep.all() as { message: Message }[]
-  contextedChatLogger.debug({ oldPrompts })
+  let oldPrompts: Message[] = []
+  try {
+    oldPrompts = oldPromptsPrep.all() as Message[]
+    contextedChatLogger.debug({ oldPrompts })
+  } catch (oldPromptsErr) {
+    contextedChatLogger.error(
+      { oldPromptsErr },
+      'Failed to retrieve messages from history'
+    )
+    // Continue with empty context.
+  }
 
   const newMessage = {
     message: {
@@ -148,15 +157,15 @@ export const contextedChat = async ({ prompt }: { prompt: string }): Promise<Abo
       content: prompt
     }
   }
-  const addPromptPrep = historyDB.prepare(`
+  const insertPromptPrep = historyDB.prepare(`
     insert into history (prompt)
       values (jsonb(?))
     returning *;
   `)
-  const addPromptRun = addPromptPrep.run(JSON.stringify(newMessage))
-  contextedChatLogger.debug({ addPromptRun })
+  const insertPromptRun = insertPromptPrep.run(JSON.stringify(newMessage))
+  contextedChatLogger.debug({ insertPrompt: insertPromptRun })
 
-  const response = await runLLMChat({ messageContent: prompt, context: [] })
+  const response = await runLLMChat({ messageContent: prompt, context: oldPrompts })
   if (response) {
     const fullResponse: ChatResponse[] = []
     let fullContent: Message['content'] = ''
@@ -170,74 +179,8 @@ export const contextedChat = async ({ prompt }: { prompt: string }): Promise<Abo
       if (part.done === true) {
         part.message.content = fullContent
         contextedChatLogger.debug({ part })
-      }
-    }
-  }
-
-  return response
-}
-
-export const contextedChat_ = async ({ prompt }: { prompt: string }) => {
-  assert.ok(typeof prompt === 'string', `The prompt text should be a string, got ${typeof prompt}`)
-  assert.ok(prompt !== '', 'Prompt text is empty')
-
-  const contextDB = new DatabaseSync('./context.db', {
-    allowExtension: true
-  })
-  contextDB.loadExtension('./plugins/json1.dylib')
-
-  contextDB.prepare(`
-    create table if not exists context (
-      rowid integer primary key autoincrement,
-      response text
-    )
-  `).run()
-
-  /**
-   * This chat look for any saved context and add it to the prompt.
-   * It then inserts the answer in the table and returns that answer.
-   */
-  const prepHasContext = contextDB.prepare(`
-    select count(*) as count from context limit 1;
-  `)
-  const { count } = prepHasContext.get() as { count: number }
-  let chatHistory = [] as { message: Message }[]
-  if (count !== 0) {
-    // Collect the previous answers.
-    // e.g. select response -> 'message' ->> 'content' from context;
-    const prepGetContext = contextDB.prepare(`
-      select
-        response -> 'message' ->> 'role' as role,
-        response -> 'message' ->> 'content' as content
-      from context;
-    `)
-    const runGetContext = prepGetContext.all() as { message: Message }[]
-    chatHistory = runGetContext
-  }
-  const messagePrompt = { message: { role: 'user', content: prompt} }
-  chatHistory = [...chatHistory, messagePrompt]
-  contextedChatLogger.debug({ chatHistory, context: chatHistory.map(({ message }) => message) })
-  const response = await runLLMChat({ messageContent: prompt, context: chatHistory.map(({ message }) => message) })
-  if (response) {
-    const fullResponse: ChatResponse[] = []
-    let fullContent: Message['content'] = ''
-
-    for await (const part of response) {
-      fullResponse.push(part)
-      if (part?.message?.content) {
-        fullContent += part.message.content
-      }
-      process.stdout.write(part.message.content)
-      if (part.done === true) {
-        part.message.content = fullContent
-        const prepInsertChat = contextDB.prepare(`
-          insert into context (response)
-          values (jsonb(?))
-          returning *;
-        `)
-        const runInsertPrompt = prepInsertChat.run(JSON.stringify(messagePrompt))
-        const runInsertChat = prepInsertChat.all(JSON.stringify(part))
-        contextedChatLogger.debug({ runInsertPrompt, runInsertChat })
+        const insertResponseRun = insertPromptPrep.run(JSON.stringify(part))
+        contextedChatLogger.debug({ insertResponse: insertResponseRun })
       }
     }
   }
