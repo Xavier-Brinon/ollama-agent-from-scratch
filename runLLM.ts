@@ -139,8 +139,17 @@ export const contextedChat = async ({ prompt }: { prompt: string }): Promise<Abo
       prompt -> 'message' ->> 'content' as content
     from history;
   `)
-  const oldPrompts = oldPromptsPrep.all() as Message[]
-  contextedChatLogger.debug({ oldPrompts })
+  let oldPrompts: Message[] = []
+  try {
+    oldPrompts = oldPromptsPrep.all() as Message[]
+    contextedChatLogger.debug({ oldPrompts })
+  } catch (oldPromptsErr) {
+    contextedChatLogger.error(
+      { oldPromptsErr },
+      'Failed to retrieve messages from history'
+    )
+    // Continue with empty context.
+  }
 
   const newMessage = {
     message: {
